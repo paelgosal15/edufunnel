@@ -657,3 +657,15 @@ canvas {
     flex: 1;
   }
 }
+
+
+/* n8n chat widget: tampil hanya di dashboard */
+body:not(.dashboard-active) .chat-window-wrapper {
+  display: none;
+}
+
+:root {
+  --chat--color-primary: #3b82f6;
+  --chat--window--z-index: 1000;
+  --chat--toggle--z-index: 1000;
+}
