@@ -24,11 +24,11 @@ SQL juga mengaktifkan Row Level Security dan membuat policy `select` untuk role 
 Konfigurasi ada di bagian atas `js/main.js`:
 
 ```js
-const SUPABASE_URL = "https://tyjgxjawjqwerwemzkhy.supabase.co";
+const SUPABASE_URL = "https://llwouyvyxxmdkydzspeh.supabase.co";
 const SUPABASE_ANON_KEY = "isi_dengan_publishable_anon_key";
 ```
 
-Project ini sudah diisi dengan URL Supabase dan publishable key yang diberikan. Jika memakai project Supabase lain, ganti dua nilai tersebut. Gunakan hanya publishable/anon key di frontend. Jangan memakai service role key atau secret key di file frontend.
+URL sudah menunjuk ke project Supabase `edufunnel`. Isi `SUPABASE_ANON_KEY` dengan publishable key project tersebut. Gunakan hanya publishable/anon key di frontend. Jangan memakai service role key atau secret key di file frontend.
 
 ## Setup Login User
 
