@@ -512,6 +512,18 @@ async function fetchSupabaseData() {
     ? []
     : dailyResult.data;
 
+  const hasAnyRows =
+    Boolean(!summaryResult.error && summaryResult.data)
+    || (!sourcesResult.error && Array.isArray(sourcesResult.data) && sourcesResult.data.length > 0)
+    || (!trafficResult.error && Array.isArray(trafficResult.data) && trafficResult.data.length > 0)
+    || dailyRows.length > 0;
+
+  if (!hasAnyRows) {
+    throw new Error(
+      "Tabel Supabase terbaca tetapi kosong. Cek policy select untuk role anon dan pastikan data sudah diisi."
+    );
+  }
+
   console.log("RAW daily_channel_traffic:", dailyRows);
 
   const mappedData = mapSupabaseData(
@@ -1339,6 +1351,12 @@ function getChannelTrafficTitle() {
   return "Last 7 Days Channel Traffic";
 }
 
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, function (char) {
+    return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char];
+  });
+}
+
 function formatAnimatedNumber(value, format, decimals) {
   if (format === "percent") {
     return `${Number(value).toFixed(decimals)}%`;
@@ -1579,7 +1597,7 @@ function renderOverview() {
 
         <p>
           Best channel:
-          <strong>${bestSource.name}</strong>
+          <strong>${escapeHtml(bestSource.name)}</strong>
           with conversion rate ${formatConversionRate(bestSource.conversion_rate)}%.
         </p>
 
@@ -1607,8 +1625,8 @@ function renderChannelAnalysis() {
     return `
       <div class="channel-card">
         <div class="channel-top">
-          <h2>${source.name}</h2>
-          <span class="badge ${badgeClass}">${source.status}</span>
+          <h2>${escapeHtml(source.name)}</h2>
+          <span class="badge ${badgeClass}">${escapeHtml(source.status)}</span>
         </div>
 
         <p class="label">Visitors</p>
@@ -1713,14 +1731,14 @@ function renderDataTable() {
   const rows = filteredSources.map(function (source) {
     return `
       <tr>   
-        <td>${source.name}</td>
+        <td>${escapeHtml(source.name)}</td>
         <td data-count-up data-value="${Number(source.pengunjung)}">${Number(source.pengunjung).toLocaleString("id-ID")}</td>
         <td data-count-up data-value="${Number(source.daftar)}">${Number(source.daftar).toLocaleString("id-ID")}</td>
         <td data-count-up data-value="${Number(source.test)}">${Number(source.test).toLocaleString("id-ID")}</td>
         <td data-count-up data-value="${Number(source.daftar_ulang)}">${Number(source.daftar_ulang).toLocaleString("id-ID")}</td>
         <td data-count-up data-value="${Number(source.berkuliah)}">${Number(source.berkuliah).toLocaleString("id-ID")}</td>
         <td data-count-up data-value="${Number(source.conversion_rate)}" data-format="percent" data-decimals="2">${formatConversionRate(source.conversion_rate)}%</td>
-        <td>${source.status}</td>
+        <td>${escapeHtml(source.status)}</td>
       </tr>
     `;
   }).join("");
