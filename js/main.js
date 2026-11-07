@@ -9,8 +9,8 @@ let supabaseDataClient = null;
 let activeDataSource = "none";
 let dailyAggregationCache = null;
 
-const SUPABASE_URL = "https://tyjgxjawjqwerwemzkhy.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR5amd4amF3anF3ZXJ3ZW16a2h5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkzNDM1NDIsImV4cCI6MjA5NDkxOTU0Mn0.yDYRxuK0Mw-Ny-etoULGEXczXlKpdP5M2YVsouDi5y0";
+const SUPABASE_URL = "https://llwouyvyxxmdkydzspeh.supabase.co";
+const SUPABASE_ANON_KEY = "PASTE_PUBLISHABLE_KEY_DI_SINI";
 
 const CHANNEL_TRAFFIC_KEYS = {
   "Google Ads": "google_ads",
