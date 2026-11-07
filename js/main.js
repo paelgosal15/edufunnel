@@ -37,12 +37,14 @@ const dateFilter = document.getElementById("dateFilter");
 
 /* ================= PAGE SWITCHING ================= */
 function showRegisterPage() {
+  document.body.classList.remove("dashboard-active");
   registerPage.classList.remove("hidden");
   loginPage.classList.add("hidden");
   dashboardPage.classList.add("hidden");
 }
 
 function showLoginPage() {
+  document.body.classList.remove("dashboard-active");
   registerPage.classList.add("hidden");
   loginPage.classList.remove("hidden");
   dashboardPage.classList.add("hidden");
@@ -52,6 +54,9 @@ function showDashboardPage() {
   registerPage.classList.add("hidden");
   loginPage.classList.add("hidden");
   dashboardPage.classList.remove("hidden");
+  document.body.classList.add("dashboard-active");
+
+  if (window.initN8nChat) window.initN8nChat();
 
   fetchEduFunnelData();
 }
