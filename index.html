@@ -15,7 +15,10 @@
   <!-- jsPDF -->
   <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
 
-  <!-- CSS -->
+  <!-- n8n chat widget (CSS bawaan) -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@n8n/chat/dist/style.css" />
+
+  <!-- CSS (harus setelah style n8n agar tema EduFunnel menimpa) -->
   <link rel="stylesheet" href="css/style.css" />
 </head>
 
@@ -149,5 +152,8 @@
   <!-- JavaScript -->
   <script src="js/data_funnel.js"></script>
   <script src="js/main.js"></script>
+
+  <!-- Chat box / asisten AI -> n8n (hanya tampilan, tidak mengubah database) -->
+  <script type="module" src="js/n8n-chat.js"></script>
 </body>
 </html>
