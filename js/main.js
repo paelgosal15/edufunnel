@@ -56,9 +56,33 @@ function showDashboardPage() {
   dashboardPage.classList.remove("hidden");
   document.body.classList.add("dashboard-active");
 
-  if (window.initN8nChat) window.initN8nChat();
-
+  checkAdminAccess();
   fetchEduFunnelData();
+}
+
+/* Role: akun yang ada di tabel admin_users = admin, selain itu = user biasa */
+async function checkAdminAccess() {
+  const link = document.getElementById("adminLink");
+
+  if (!link) return;
+
+  link.classList.add("hidden");
+
+  try {
+    const user = await getCurrentSupabaseUser();
+
+    if (!user) return;
+
+    const { data } = await createSupabaseClient()
+      .from("admin_users")
+      .select("user_id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (data) link.classList.remove("hidden");
+  } catch (error) {
+    console.warn("Cek akses admin gagal:", error);
+  }
 }
 
 function createSupabaseClient() {
@@ -1480,9 +1504,199 @@ function renderPage(page) {
   if (page === "channel") renderChannelAnalysis();
   if (page === "funnel") renderFunnelDepth();
   if (page === "table") renderDataTable();
+  if (page === "assistant") renderAssistant();
+
+  document.body.classList.toggle("assistant-active", page === "assistant");
 
   runDashboardAnimations();
   setupReportExport();
+}
+
+/* ================= AI ASSISTANT ================= */
+const assistantSuggestions = [
+  "Berapa calon mahasiswa yang tertarik?",
+  "Di tahap mana paling banyak yang berhenti?",
+  "Kanal mana yang menghasilkan konversi tertinggi?",
+  "Berapa tingkat konversi penerimaan?",
+  "Ringkas perjalanan calon mahasiswa"
+];
+
+const assistantState = {
+  sending: false,
+  messages: [
+    { role: "assistant", text: "Halo! Aku asisten EduFunnel." },
+    { role: "assistant", text: "Tanya apa saja soal data funnel penerimaan mahasiswa." }
+  ]
+};
+
+function formatAssistantText(text) {
+  const lines = escapeHtml(text).split("\n");
+  let html = "";
+  let listType = null;
+
+  function inline(line) {
+    return line
+      .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+      .replace(/`([^`]+)`/g, "<code>$1</code>");
+  }
+
+  function closeList() {
+    if (listType) {
+      html += "</" + listType + ">";
+      listType = null;
+    }
+  }
+
+  lines.forEach(function (line) {
+    const ordered = line.match(/^\s*\d+[.)]\s+(.*)$/);
+    const bullet = line.match(/^\s*[-*•]\s+(.*)$/);
+
+    if (ordered || bullet) {
+      const type = ordered ? "ol" : "ul";
+
+      if (listType !== type) {
+        closeList();
+        html += "<" + type + ">";
+        listType = type;
+      }
+
+      html += "<li>" + inline((ordered || bullet)[1]) + "</li>";
+      return;
+    }
+
+    closeList();
+
+    if (line.trim()) html += "<p>" + inline(line) + "</p>";
+  });
+
+  closeList();
+  return html;
+}
+
+function getAssistantMessagesMarkup() {
+  const items = assistantState.messages.map(function (message) {
+    if (message.role === "user") {
+      return `
+        <div class="assistant-message user">
+          <span class="assistant-author">Kamu</span>
+          <p>${escapeHtml(message.text)}</p>
+        </div>
+      `;
+    }
+
+    return `
+      <div class="assistant-message bot${message.error ? " error" : ""}">
+        <span class="assistant-author">Asisten EduFunnel</span>
+        ${formatAssistantText(message.text)}
+      </div>
+    `;
+  });
+
+  if (assistantState.sending) {
+    items.push(`
+      <div class="assistant-message bot">
+        <span class="assistant-author">Asisten EduFunnel</span>
+        <div class="assistant-typing" aria-label="Asisten sedang mengetik"><i></i><i></i><i></i></div>
+      </div>
+    `);
+  }
+
+  return items.join("");
+}
+
+function refreshAssistantMessages() {
+  const list = document.getElementById("assistantMessages");
+
+  if (!list) return;
+
+  list.innerHTML = getAssistantMessagesMarkup();
+  list.scrollTop = list.scrollHeight;
+
+  const input = document.getElementById("assistantInput");
+  const send = document.getElementById("assistantSend");
+
+  if (input) input.disabled = assistantState.sending;
+  if (send) send.disabled = assistantState.sending;
+}
+
+async function sendAssistantMessage(text) {
+  const question = String(text || "").trim();
+
+  if (!question || assistantState.sending) return;
+
+  assistantState.messages.push({ role: "user", text: question });
+  assistantState.sending = true;
+  refreshAssistantMessages();
+
+  try {
+    const reply = await window.EduFunnelChat.send(question);
+    assistantState.messages.push({ role: "assistant", text: reply });
+  } catch (error) {
+    console.error("EduFunnel assistant:", error);
+    assistantState.messages.push({
+      role: "assistant",
+      error: true,
+      text: "Maaf, asisten belum bisa dihubungi. Pastikan n8n dan ngrok sedang berjalan, lalu coba kirim lagi."
+    });
+  }
+
+  assistantState.sending = false;
+  refreshAssistantMessages();
+
+  const input = document.getElementById("assistantInput");
+
+  if (input && currentPage === "assistant") input.focus();
+}
+
+function renderAssistant() {
+  app.innerHTML = `
+    <section class="page-title">
+      <p>AI ASSISTANT</p>
+      <h1>AI Assistant</h1>
+      <span>Tanya apa saja soal data funnel penerimaan mahasiswa.</span>
+    </section>
+
+    <section class="assistant-card">
+      <div id="assistantMessages" class="assistant-messages" aria-live="polite">
+        ${getAssistantMessagesMarkup()}
+      </div>
+
+      <div class="assistant-suggestions">
+        ${assistantSuggestions.map(function (item) {
+          return `<button type="button" class="assistant-chip" data-suggestion="${escapeHtml(item)}">${escapeHtml(item)}</button>`;
+        }).join("")}
+      </div>
+
+      <form id="assistantForm" class="assistant-form" autocomplete="off">
+        <input id="assistantInput" type="text" placeholder="Tanyakan tentang data penerimaan..." />
+        <button id="assistantSend" type="submit" class="auth-button">Kirim</button>
+      </form>
+    </section>
+  `;
+
+  const list = document.getElementById("assistantMessages");
+  const form = document.getElementById("assistantForm");
+  const input = document.getElementById("assistantInput");
+  const send = document.getElementById("assistantSend");
+
+  list.scrollTop = list.scrollHeight;
+  input.disabled = assistantState.sending;
+  send.disabled = assistantState.sending;
+
+  form.onsubmit = function (event) {
+    event.preventDefault();
+
+    const value = input.value;
+
+    input.value = "";
+    sendAssistantMessage(value);
+  };
+
+  document.querySelectorAll("[data-suggestion]").forEach(function (chip) {
+    chip.onclick = function () {
+      sendAssistantMessage(chip.dataset.suggestion);
+    };
+  });
 }
 
 /* ================= HELPERS ================= */

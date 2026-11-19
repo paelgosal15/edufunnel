@@ -1,60 +1,67 @@
-// Chat box / asisten AI EduFunnel -> n8n (Chat Trigger + AI Agent)
-// Hanya lapisan tampilan: widget ini cuma mengirim pesan ke webhook n8n.
-// Tidak ada query/perubahan ke database Supabase dari file ini.
-//
-// Isi N8N_CHAT_URL dengan "Production URL" dari node "Saat pesan obrolan diterima"
-// (When chat message received). Workflow n8n harus Active/Published.
-import { createChat } from "https://cdn.jsdelivr.net/npm/@n8n/chat/dist/chat.bundle.es.js";
-
+// Koneksi AI Assistant EduFunnel -> n8n (Chat Trigger + AI Agent)
+// URL webhook tetap sama seperti sebelumnya; hanya tampilannya yang kini berupa halaman AI Assistant.
 const N8N_CHAT_URL = "https://crimp-shawl-thesis.ngrok-free.dev/webhook/e5bd7fec-3a4a-4c53-ae2c-bc41ad89f926/chat";
 
-let chatStarted = false;
+const chatSessionId = (window.crypto && crypto.randomUUID)
+  ? crypto.randomUUID()
+  : String(Date.now()) + Math.random().toString(16).slice(2);
 
-function startChat() {
-  if (chatStarted) return;
+function extractReply(raw) {
+  const text = String(raw || "").trim();
+  if (!text) return "";
 
-  if (!N8N_CHAT_URL || N8N_CHAT_URL.startsWith("PASTE_")) {
-    console.warn("EduFunnel chat: N8N_CHAT_URL belum diisi di js/n8n-chat.js");
-    return;
+  // Respons biasa: {"output": "..."}
+  try {
+    const parsed = JSON.parse(text);
+    const item = Array.isArray(parsed) ? parsed[0] : parsed;
+    const reply = item && (item.output || item.text || item.message);
+    if (reply) return String(reply);
+  } catch (error) {
+    // bukan satu objek JSON, lanjut cek format streaming
   }
 
-  chatStarted = true;
-
-  createChat({
-    webhookUrl: N8N_CHAT_URL,
-    webhookConfig: {
-      method: "POST",
-      headers: {
-        // Melewati halaman peringatan ngrok (akun gratis) agar fetch dari browser tidak diblokir.
-        "ngrok-skip-browser-warning": "true"
+  // Respons streaming: satu objek JSON per baris ({"type":"item","content":"..."})
+  let streamed = "";
+  text.split("\n").forEach(function (line) {
+    try {
+      const chunk = JSON.parse(line);
+      if (chunk.type === "item" && typeof chunk.content === "string") {
+        streamed += chunk.content;
       }
-    },
-    mode: "window",
-    showWelcomeScreen: false,
-    loadPreviousSession: true,
-    chatInputKey: "chatInput",
-    chatSessionKey: "sessionId",
-    initialMessages: [
-      "Halo! Aku asisten AI EduFunnel 👋",
-      "Tanya apa saja soal data funnel penerimaan mahasiswa, misalnya: \"Channel mana yang paling banyak pengunjung?\" atau \"Di tahap mana drop-off terbesar?\""
-    ],
-    i18n: {
-      en: {
-        title: "EduFunnel Assistant",
-        subtitle: "Asisten AI terhubung ke n8n",
-        footer: "",
-        getStarted: "Mulai chat",
-        inputPlaceholder: "Tulis pertanyaanmu..."
-      }
+    } catch (error) {
+      // abaikan baris yang bukan JSON
     }
   });
+
+  return streamed || text;
 }
 
-// Dipanggil oleh main.js setelah login berhasil (showDashboardPage).
-window.initN8nChat = startChat;
+window.EduFunnelChat = {
+  async send(message) {
+    const response = await fetch(N8N_CHAT_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        // Melewati halaman peringatan ngrok (free) agar fetch dari browser tidak diblokir.
+        "ngrok-skip-browser-warning": "true"
+      },
+      body: JSON.stringify({
+        action: "sendMessage",
+        sessionId: chatSessionId,
+        chatInput: message
+      })
+    });
 
-// Jika main.js sudah menampilkan dashboard sebelum modul ini selesai dimuat
-// (modul dieksekusi belakangan), langsung mulai.
-if (document.body.classList.contains("dashboard-active")) {
-  startChat();
-}
+    if (!response.ok) {
+      throw new Error("n8n membalas dengan status " + response.status);
+    }
+
+    const reply = extractReply(await response.text());
+
+    if (!reply) {
+      throw new Error("Balasan dari n8n kosong");
+    }
+
+    return reply;
+  }
+};
