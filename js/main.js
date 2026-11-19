@@ -67,6 +67,7 @@ async function checkAdminAccess() {
   if (!link) return;
 
   link.classList.add("hidden");
+  link.style.display = "none";
 
   try {
     const user = await getCurrentSupabaseUser();
@@ -79,7 +80,10 @@ async function checkAdminAccess() {
       .eq("user_id", user.id)
       .maybeSingle();
 
-    if (data) link.classList.remove("hidden");
+    if (data) {
+      link.classList.remove("hidden");
+      link.style.display = "block";
+    }
   } catch (error) {
     console.warn("Cek akses admin gagal:", error);
   }
