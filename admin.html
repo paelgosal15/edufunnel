@@ -53,7 +53,8 @@ const TABLES = {
     prep(r){ const v=r.pengunjung||0; r.conversion_rate=v?+(r.berkuliah/v*100).toFixed(2):0; r.drop_off=+(100-r.conversion_rate).toFixed(2); } },
   daily_channel_traffic: { label: "Traffic Harian", order: "date", desc: true, cols: [["date","date"],["channel","text"],...N] },
   monthly_channel_traffic: { label: "Traffic Bulanan", order: "month_order", cols: [["period","text"],["month_order","int"],["month","text"],["google_ads","int"],["instagram","int"],["twitter_x","int"],["website","int"]] },
-  summary_metrics: { label: "Ringkasan", order: "id", cols: [["project_name","text"],["period","text"],["generated_by","text"],["total_pengunjung","int"],["total_daftar","int"],["total_test","int"],["total_daftar_ulang","int"],["total_berkuliah","int"],["funnel_stages","json"],["funnel_data","json"]] }
+  summary_metrics: { label: "Ringkasan", order: "id", cols: [["project_name","text"],["period","text"],["generated_by","text"],["total_pengunjung","int"],["total_daftar","int"],["total_test","int"],["total_daftar_ulang","int"],["total_berkuliah","int"],["funnel_stages","json"],["funnel_data","json"]] },
+  auth_logs_view: { label: "Log Daftar & Login", order: "created_at", desc: true, readonly: true, cols: [["hari","text"],["tanggal","text"],["jam_wib","text"],["event","text"],["full_name","text"],["email","text"]] }
 };
 let cur = "funnel_sources", rows = [], editId = null;
 function msg(t, c) { const m = $("msg"); m.textContent = t || ""; m.className = c || ""; }
@@ -73,11 +74,13 @@ async function load() {
   document.querySelectorAll("#tabs button").forEach(b => b.classList.toggle("on", b.dataset.k === cur));
   const { data, error } = await sb.from(cur).select("*").order(T.order, { ascending: !T.desc }).limit(500);
   if (error) { msg("Gagal memuat: " + error.message, "err"); return; }
+  $("add").classList.toggle("hide", !!T.readonly);
   rows = data; const t = $("tbl"); t.innerHTML = "";
   const hr = t.insertRow(); ["id", ...T.cols.map(c => c[0]), ""].forEach(h => { const th = document.createElement("th"); th.textContent = h; hr.appendChild(th); });
   rows.forEach(r => {
     const tr = t.insertRow();
     ["id", ...T.cols.map(c => c[0])].forEach(k => { const v = r[k]; tr.insertCell().textContent = v !== null && typeof v === "object" ? JSON.stringify(v) : (v ?? ""); });
+    if (T.readonly) return;
     const a = tr.insertCell(); a.className = "act";
     const e = document.createElement("button"); e.className = "ghost"; e.textContent = "Edit"; e.onclick = () => openForm(r);
     const d = document.createElement("button"); d.className = "del"; d.textContent = "Hapus"; d.onclick = () => del(r);

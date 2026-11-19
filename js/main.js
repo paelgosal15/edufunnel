@@ -2485,5 +2485,5 @@ window.addEventListener("load", async function () {
     console.error("Gagal mengecek session Supabase:", error);
   }
 
-  showRegisterPage();
+  showLoginPage();
 });
