@@ -36,8 +36,27 @@ function extractReply(raw) {
   return streamed || text;
 }
 
+// Jika pertanyaan menyangkut SUS, lampirkan hasil SUS terbaru (dari Supabase) ke pesan.
+const SUS_QUESTION_PATTERN = /\bsus\b|usability|kegunaan|kuesioner|kuisioner|responden/i;
+
+async function withSusContext(message) {
+  if (!SUS_QUESTION_PATTERN.test(message) || typeof buildSusContext !== "function") {
+    return message;
+  }
+
+  try {
+    const context = await buildSusContext();
+    return context + "\n\nPERTANYAAN PENGGUNA: " + message +
+      "\n\nJawab dalam bahasa Indonesia berdasarkan data SUS di atas. Jangan menghitung ulang skor, jangan mengarang angka. Beri tafsiran dan saran perbaikan yang konkret.";
+  } catch (error) {
+    console.warn("Konteks SUS gagal dimuat:", error);
+    return message;
+  }
+}
+
 window.EduFunnelChat = {
   async send(message) {
+    const chatInput = await withSusContext(message);
     const response = await fetch(N8N_CHAT_URL, {
       method: "POST",
       headers: {
@@ -48,7 +67,7 @@ window.EduFunnelChat = {
       body: JSON.stringify({
         action: "sendMessage",
         sessionId: chatSessionId,
-        chatInput: message
+        chatInput: chatInput
       })
     });
 

@@ -463,3 +463,61 @@ function exportSusCSV() {
 
   downloadBlob(lines.join("\n"), "hasil-sus-edufunnel.csv", "text/csv;charset=utf-8");
 }
+
+/* ---------- Konteks SUS untuk AI Assistant ---------- */
+
+// Skor dihitung di sini (kode), lalu dikirim ke AI sebagai data siap pakai.
+// AI hanya menafsirkan dan menjelaskan, tidak menghitung sendiri.
+async function buildSusContext() {
+  if (!susState.questions) await loadSusQuestions();
+  await loadSusResponses();
+
+  const rows = susState.responses || [];
+
+  if (susState.loadError || !rows.length) {
+    return "DATA SUS: belum ada responden yang tersimpan di database.";
+  }
+
+  const n = rows.length;
+  const scores = rows.map(function (row) { return row.skor; });
+  const average = scores.reduce(function (a, b) { return a + b; }, 0) / n;
+  const sorted = scores.slice().sort(function (a, b) { return a - b; });
+  const median = n % 2 ? sorted[(n - 1) / 2] : (sorted[n / 2 - 1] + sorted[n / 2]) / 2;
+
+  const items = susState.questions.map(function (text, i) {
+    const valid = rows.filter(function (row) { return Array.isArray(row.jawaban) && row.jawaban.length === 10; });
+    const total = valid.reduce(function (sum, row) {
+      return sum + susItemContribution(i, Number(row.jawaban[i]));
+    }, 0);
+    return { no: i + 1, text: text, avg: valid.length ? total / valid.length : 0 };
+  });
+
+  const weakest = items.slice().sort(function (a, b) { return a.avg - b.avg; }).slice(0, 3);
+  const byRole = {};
+  rows.forEach(function (row) {
+    const key = row.peran || "tidak diisi";
+    (byRole[key] = byRole[key] || []).push(row.skor);
+  });
+
+  const lines = [
+    "DATA SUS EDUFUNNEL (dihitung otomatis oleh sistem, gunakan angka ini apa adanya):",
+    "- Jumlah responden: " + n,
+    "- Rata-rata skor SUS: " + formatSusScore(average) + " (nilai " + getSusGrade(average) + ", kategori " + getSusAdjective(average) + ")",
+    "- Median: " + formatSusScore(median) + ", terendah: " + formatSusScore(sorted[0]) + ", tertinggi: " + formatSusScore(sorted[n - 1]),
+    "- Target >= " + SUS_TARGET + ": " + (average >= SUS_TARGET ? "TERCAPAI" : "BELUM tercapai") + " (rata-rata lintas studi sekitar 68)",
+    "- Rumus: butir ganjil = jawaban - 1, butir genap = 5 - jawaban, dijumlah lalu x 2,5",
+    "Rata-rata kontribusi per butir (skala 0-4, makin rendah makin perlu diperbaiki):"
+  ].concat(items.map(function (item) {
+    return "  P" + item.no + " = " + item.avg.toFixed(2) + " | " + item.text;
+  }));
+
+  lines.push("Tiga butir terlemah: " + weakest.map(function (item) { return "P" + item.no; }).join(", "));
+  lines.push("Skor rata-rata per peran responden:");
+  Object.keys(byRole).forEach(function (role) {
+    const list = byRole[role];
+    lines.push("  " + role + " (" + list.length + " orang) = " +
+      formatSusScore(list.reduce(function (a, b) { return a + b; }, 0) / list.length));
+  });
+
+  return lines.join("\n");
+}

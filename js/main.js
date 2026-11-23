@@ -1524,7 +1524,8 @@ const assistantSuggestions = [
   "Di tahap mana paling banyak yang berhenti?",
   "Kanal mana yang menghasilkan konversi tertinggi?",
   "Berapa tingkat konversi penerimaan?",
-  "Ringkas perjalanan calon mahasiswa"
+  "Ringkas perjalanan calon mahasiswa",
+  "Analisis hasil SUS dan beri saran perbaikan"
 ];
 
 const assistantState = {
