@@ -859,3 +859,204 @@ body.assistant-active .filter-group {
   color: #fff;
   background: rgba(91,94,255,0.35);
 }
+
+/* ===== SUS (kuesioner usability) ===== */
+body.sus-active .filter-group {
+  visibility: hidden;
+}
+
+.sus-tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.sus-tab {
+  border: 1px solid rgba(255,255,255,0.12);
+  background: transparent;
+  color: #94a3b8;
+  padding: 9px 18px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.sus-tab.active {
+  background: #4f8cff;
+  border-color: #4f8cff;
+  color: #fff;
+}
+
+.sus-form label {
+  display: block;
+  margin-bottom: 6px;
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.sus-form input[type="text"],
+.sus-form select {
+  width: 100%;
+  padding: 11px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: #0b1430;
+  color: #fff;
+  font-size: 14px;
+}
+
+.sus-meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.sus-hint {
+  color: #94a3b8;
+  font-size: 13px;
+  margin-bottom: 18px;
+}
+
+.sus-question {
+  padding: 18px 0;
+  border-top: 1px solid rgba(255,255,255,0.07);
+}
+
+.sus-question-text {
+  color: #e6ebf8;
+  font-size: 15px;
+  margin-bottom: 12px;
+}
+
+.sus-scale {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.sus-scale small {
+  color: #94a3b8;
+  font-size: 11px;
+  width: 92px;
+}
+
+.sus-scale small:last-child {
+  text-align: right;
+}
+
+.sus-options {
+  display: flex;
+  flex: 1;
+  justify-content: space-between;
+  max-width: 340px;
+  gap: 8px;
+}
+
+.sus-option {
+  position: relative;
+  margin: 0 !important;
+  cursor: pointer;
+}
+
+.sus-option input {
+  position: absolute;
+  opacity: 0;
+}
+
+.sus-option span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.18);
+  color: #cbd5e1;
+  font-weight: 700;
+  transition: 0.15s;
+}
+
+.sus-option:hover span {
+  border-color: #4f8cff;
+}
+
+.sus-option input:checked + span {
+  background: #4f8cff;
+  border-color: #4f8cff;
+  color: #fff;
+}
+
+.sus-option input:focus-visible + span {
+  outline: 2px solid #93c5fd;
+  outline-offset: 2px;
+}
+
+.sus-message {
+  min-height: 20px;
+  margin: 14px 0;
+  font-size: 13px;
+}
+
+.sus-message.error {
+  color: #ff6b6b;
+}
+
+.sus-result-banner {
+  margin-bottom: 20px;
+}
+
+.sus-big {
+  font-size: 52px;
+  font-weight: 900;
+  color: #40f2a5;
+}
+
+.sus-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.sus-summary small {
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.sus-ok { color: #40f2a5; }
+.sus-bad { color: #ff6b6b; }
+
+.sus-chart-card,
+.sus-summary + .card {
+  margin-bottom: 24px;
+}
+
+.sus-chart-wrap {
+  position: relative;
+  height: 280px;
+  margin-top: 16px;
+}
+
+.sus-table-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  gap: 12px;
+}
+
+.sus-table-wrap {
+  overflow-x: auto;
+}
+
+@media (max-width: 900px) {
+  .sus-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sus-meta { grid-template-columns: 1fr; }
+  .sus-scale { flex-direction: column; align-items: stretch; }
+  .sus-scale small, .sus-scale small:last-child { width: auto; text-align: left; }
+  .sus-options { max-width: none; }
+}

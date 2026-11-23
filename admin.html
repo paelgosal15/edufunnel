@@ -54,6 +54,8 @@ const TABLES = {
   daily_channel_traffic: { label: "Traffic Harian", order: "date", desc: true, cols: [["date","date"],["channel","text"],...N] },
   monthly_channel_traffic: { label: "Traffic Bulanan", order: "month_order", cols: [["period","text"],["month_order","int"],["month","text"],["google_ads","int"],["instagram","int"],["twitter_x","int"],["website","int"]] },
   summary_metrics: { label: "Ringkasan", order: "id", cols: [["project_name","text"],["period","text"],["generated_by","text"],["total_pengunjung","int"],["total_daftar","int"],["total_test","int"],["total_daftar_ulang","int"],["total_berkuliah","int"],["funnel_stages","json"],["funnel_data","json"]] },
+  sus_questions: { label: "Pertanyaan SUS", order: "nomor", cols: [["nomor","int"],["teks","text"]] },
+  sus_responses: { label: "Jawaban SUS", order: "created_at", desc: true, cols: [["nama","text"],["peran","text"],["sumber_trafik","text"],["jawaban","json"],["skor","text"]] },
   auth_logs_view: { label: "Log Daftar & Login", order: "created_at", desc: true, readonly: true, cols: [["hari","text"],["tanggal","text"],["jam_wib","text"],["event","text"],["full_name","text"],["email","text"]] }
 };
 let cur = "funnel_sources", rows = [], editId = null;

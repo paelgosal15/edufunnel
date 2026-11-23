@@ -1509,8 +1509,10 @@ function renderPage(page) {
   if (page === "funnel") renderFunnelDepth();
   if (page === "table") renderDataTable();
   if (page === "assistant") renderAssistant();
+  if (page === "sus") renderSUS();
 
   document.body.classList.toggle("assistant-active", page === "assistant");
+  document.body.classList.toggle("sus-active", page === "sus");
 
   runDashboardAnimations();
   setupReportExport();
